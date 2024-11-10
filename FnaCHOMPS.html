@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+  <style>
+    /* Grayish rectangle where the floor was */
+.floor-rectangle {
+  position: fixed; 
+  border-top: 10px solid black;
+  top: 350px;            /* Adjust this to place it just below the Hallway image */
+right: -100px;            /* Align it to the left of the screen */
+  width: 3000px;           /* Make it span the entire width of the screen */
+  height: 200px;         /* Set the height of the rectangle */
+  background-color: #808080;  /* A grayish color */
+          /* Make sure it sits below other content like the Hallway image */
+}
+
+    #fullscreenBtn {
+  position: fixed; 
+  bottom: 95px;     
+  left: 36%; 
+  width: 300px;
+  background-color: #FFD700; /* Yellowish background for button */
+  color: black;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 1;  /* Ensure the button is on top of other elements */
+}
+
+#fullscreenBtn:hover {
+  background-color: #FFA500;  /* Darker yellow when hovered */
+}
+
+    /* Initial styling for the power toggle button */
+.power-toggle-btn {
+  z-index: 10000;
+    background-color: black;   /* Default background (inactive state) */
+    color: yellow;             /* Text color when inactive */
+    padding: 10px 20px;
+    border: 2px solid #000;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    transition: background-color 0.3s, color 0.3s; /* Smooth color transition */
+}
+
+/* Active state when power is turned on */
+.power-toggle-btn.active {
+    background-color: yellow;
+    color: black;
+}
+/* Optional: Add an animation for the button when it appears/disappears */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+#camera-feed {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Hide overflow during transition */
+}/* Fullscreen static overlay */
+.static-overlay {
+  position: fixed;  /* Fix it over the entire viewport */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('Static.png'); /* The static image */
+  background-size: cover;
+  background-position: center;
+  z-index: 10000; /* Ensure it's on top of everything */
+  pointer-events: none; /* Make sure it doesn't block interactions with other elements */
+  opacity: 0;  /* Initially hidden */
+  display: none;  /* Initially hidden */
+  transition: opacity 0.1s ease-in, opacity 0.1s ease-out 0.3s; /* Fade in, then fade out */
+}
+    #Cam {
+  position: fixed; /* Fixed to cover the entire screen */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none; /* Initially hidden */
+  z-index: 9999; /* Ensures it covers everything */
+}
+
+#Cam .menu-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(128, 128, 128, 0.7); /* Gray background with some transparency */
+  z-index: -1; /* Below the camera options but above the background */
+}
+
+#Cam img.hallway-image {
+  position: relative;
+  margin: 0 auto;
+  display: block;
+  z-index: 1; /* Ensures the image is above the overlay */
+}
+
+#Cam .camera-options {
+  position: fixed;  /* Fixed to the right of the screen */
+  top: 10%;         /* Adjusts how far down the grid appears */
+  right: 20px;      /* 20px from the right edge */
+  z-index: 2;       /* Above the image and overlay */
+  width: auto;      /* Auto width to let the grid adjust */
+  max-width: 300px; /* Limit the width of the grid */
+}
+
+#Cam .camera-options button {
+  margin: 5px;
+  padding: 10px 20px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+       #game-time {
+      font-size: 24px;
+      font-family: Arial, sans-serif;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: white;
+    }
+
+    #night-counter {
+      font-size: 24px;
+      font-family: Arial, sans-serif;
+      position: absolute;
+      top: 40px;
+      right: 10px;
+      color: white;
+    }
+
+    #win-message {
+      display: none;
+      font-size: 36px;
+      color: green;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 50px;
+    }
+    #office-vent-closed {
+  position: absolute;
+  transform: rotate(2.6deg);  /* Rotate the icon by 3 degrees */
+  top: 60px;  /* Adjust as needed */
+left: 60%;
+  display: block;  /* Hidden by default */
+  width: 400px;    /* Adjust the size of the icon */
+  height: auto;   /* Maintain aspect ratio */
+  z-index: 999;
+}
+
+/* Container for the menu */
+.menu {
+    position: absolute;
+    top: 50%; /* Vertically center */
+    left: 50%; /* Horizontally center */
+    transform: translate(-50%, -50%); /* Adjust for exact centering */
+    text-align: center;
+    width: 60%; /* Set width to fit the screen */
+    max-width: 400px; /* Max width for large screens */
+}
+
+/* Container to position the logo and start button */
+.logo-container {
+    position: relative; /* Allow positioning of the Start Game button */
+}
+
+/* Logo styling */
+#chomps-logo {
+    width: 100%; /* Make logo take full container width */
+    height: auto;
+    display: block; /* Remove any unwanted spaces under the image */
+}
+
+
+.start-button {
+    position: absolute;
+    top: 50%; /* Position it vertically in the middle of the logo */
+    left: 50%; /* Position it horizontally in the middle of the logo */
+     padding: 15px 30px;
+    font-size: 20px;
+    background-color: #fb311a; /* Green background */
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+/* Hover effect for the Start Game button */
+.start-button:hover {
+    background-color: #45a049;
+}
+
+/* Controls Section */
+.controls {
+    margin-top: 20px; /* Space between the logo and the control buttons */
+}
+
+.controls h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.controls button {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    font-size: 18px;
+    background-color: #008CBA; /* Blue background for control buttons */
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+/* Hover effect for control buttons */
+.controls button:hover {
+    background-color: #007B9A;
+}
+
+/* Animatronic Controls styling */
+.animatronic-controls {
+    position: absolute;
+    right: 10px; /* Position controls on the right side */
+    top: 10%; /* Space from the top */
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+    color: white;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.animatronic-controls h3 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+/* Animatronic control buttons styling */
+.animatronic-controls button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 16px;
+    background-color: #008CBA; /* Blue background for control buttons */
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+/* Hover effect for animatronic control buttons */
+.animatronic-controls button:hover {
+    background-color: #007B9A;
+}
+    #fade-overlay { position: fixed; top: 0; left: 0; width:
+       100%; height: 100%; background: black; opacity: 0; transition:
+       opacity 0.1s ease-in-out; pointer-events: none; z-index: 9999; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1b1b1b;
+      color: white;
+      text-align: center;
+    }
+
+    #clawed-jumpscare-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8); /* Dark background */
+  z-index: 10010;
+  display: none;
+}
+
+#clawed-jumpscare-video {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+
+    #fog-overlay {
+  position: absolute;
+  z-index: 10000;  /* Places the fog over the camera image but below UI elements */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;  /* So it doesn't block any interactions with the camera feed */
+  opacity: 0.5;  /* Adjust this for the fog intensity */
+  display: block;  /* Make sure the fog is visible */
+}
+    .game-screen {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .camera-feed button {
+      position: fixed;
+      z-index: 9999;
+            bottom: 20px;
+            right: 20px;
+            width: 500px;
+            height: 50px;
+            background-color: white;
+            color: #000;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+            line-height: 50px;
+            border: 3px solid black;
+            border-radius: 8px;
+            font-family: monospace;
+            cursor: pointer;
+    }
+    .camera-menu {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .camera-menu button {
+      margin: 10px;
+      padding: 10px;
+    }
+    .door-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+}
+
+.door-controls button {
+  width: 500px;
+  height: 50px;
+  background-color:red;
+  font-weight: bold;
+  font-size: 18px;
+  text-align: center;
+  line-height: 50px;
+  border: 3px solid black;
+  border-radius: 8px;
+  font-family: monospace;
+  cursor: pointer;
+  color: white; /* Optional: Set text color to white */
+  outline: none; /* Optional: Remove default button outline */
+}
+
+    #camera-menu {
+      top: 50%; /* Center it vertically */
+      left: 50%; /* Center it horizontally */
+  display: none;
+  width: 300px;
+  margin: auto;
+
+}
+
+.camera-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.button-grid {
+
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.button-grid button {
+  z-index: 10000; /* Ensure it appears above other elements */
+
+  top: 10px; /* Center it vertically */
+  left: 50%; /* Center it horizontally */
+  font-weight: bold;
+  border-radius: 4px;
+  border: 9px solid black; /* Thicker black border around each button */
+  width: 100%;
+  height: 100%;
+}
+
+.main-area {
+  grid-row: 1 / span 2;
+  grid-column: 2 / span 2;
+}
+
+.lab {
+  grid-row: 1;
+  grid-column: 4;
+}
+
+.power-room {
+  grid-row: 2;
+  grid-column: 4;
+}
+
+.hallway {
+  color: gray;
+  background-color: gray;
+  grid-row: 3;
+  grid-column: 3;
+}
+
+.office {
+  color: gray;
+  grid-row: 4;
+  grid-column: 3;
+  z-index: 10000; /* Ensure it appears above other elements */
+background-color: gray;
+}
+
+.vent {
+  grid-row: 3;
+  grid-column: 4;
+  height: 50%;
+  width: 50%;
+}
+
+#hallway {
+  position: relative;
+  width: 20px;   /* Fixed width of 500px */
+  height: 50px;  /* Fixed height of 500px */
+  overflow: hidden; /* Ensure anything that overflows is hidden */
+}
+
+.hallway-image {
+
+  transform: rotate(0.5deg);  /* Rotate the icon by 3 degrees */
+
+}
+button-grid:active { background-color: green; }
+.overlay-container { position: relative; display: flex;
+   justify-content: center; align-items: center; height: 100vh; }
+   .chomps-overlay { position: absolute; top: 0; 
+    left: 0; width: 100%; height: 100%; display: none; }
+    .camera-view {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: block;  /* Make sure the camera view is visible */
+}
+
+
+  </style>
+</head>
+<body>
+<img id="office-vent-closed" src="OfficeVent.png" alt="Office Vent Closed" style="display: none;">
+<!-- Audio for Door Closing -->
+<div class="floor-rectangle"></div>
+
+<!-- Camera Menu (Cam) Div -->
+<div id="Cam" style="display:none;">
+  <img id="fog-overlay" src="Fog.png" alt="Fog Overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;">
+  <!-- Icon for Office Vent Closed -->
+  <div class="menu-overlay"></div>
+  <img src="Cam.png" alt="Camera Menu Image" class="cam-image" style="width: 500px; height: 500px;">
+  <!-- Add any camera options here -->
+  <div class="camera-options">
+      <div class="button-grid">
+        <button class="lab" onclick="openCamera('4')">Storage</button>
+        <button class="hallway" onclick="Nothing()">Hallway</button>
+        <button class="main-area" onclick="openCamera('1')">Main Area</button>
+        <button class="office" onclick="Nothing()">Office</button>
+        <button class="power-room" onclick="openCamera('5')">Power Room</button>
+        <button class="vent" onclick="openCamera('3')">Vent</button>
+      </div>
+    </div>
+  </div>
+
+  </style>
+</head>
+<body>
+  <div class="static-overlay"></div>
+
+<!-- Button to toggle the static overlay visibility -->
+  <div id="fade-overlay"></div>
+  <div id="clawed-jumpscare-overlay" style="display: none;">
+    <video id="clawed-jumpscare-video" width="100%" height="100%" autoplay>
+      <source src="clawedjumpscare.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  
+<div class="container">
+  <h1></h1>
+  <div id="death-screen" style="display: none; color: white;">
+    <h2>GAME OVER</h2>
+    <p id="death-message"></p>
+    <button onclick="showMenu()">Main Menu</button>
+  </div>
+  <!-- Menu -->
+  <div class="menu">
+    <!-- Chomps Logo with the Start Game button overlaying it -->
+    <div class="logo-container">
+        <img id="chomps-logo" src="CHOMPSLOGO.png" alt="Chomps Logo">
+        <button class="start-button" onclick="showGameScreen()">Start Game</button>
+    </div>
+  </div>
+
+<!-- Animatronic Controls Section -->
+
+
+<!-- Animatronic Controls Section -->
+<div class="animatronic-controls">
+    <h3>Controls:</h3>
+    <button onclick="setDifficulty()">Set Difficulty</button>
+    <button onclick="toggleAnimatronic('chomps')">Toggle Chomps</button>
+    <button onclick="toggleAnimatronic('mouse')">Toggle Mouse</button>
+    <button onclick="toggleAnimatronic('clawed')">Toggle Clawed</button>
+    <button onclick="quitGame()">Quit</button>
+    
+</div>
+  
+  <!-- Game Screen -->
+  <div class="game-screen">
+    <h2></h2>
+    <div class="door-controls">
+      <button onclick="closeOfficeDoor()"></button>
+    </div>
+    <div class="camera-feed">
+      <button onclick="openCamerasMenu()"></button>
+    </div>
+  <!-- Camera View (Initially Hidden) -->
+<div></div>
+<!-- Hallway Camera Section (Initially Displayed) -->
+<!-- Hallway Camera Section (Initially Hidden) -->
+<div id="hallway"></div>
+<img src="image/Hallway.png" alt="Hallway" class="hallway-image" style="width: 375px; height: 375px; position: absolute; top: 0; left: 50%; transform: translateX(-50%);">
+
+
+  <div class="power-controls">
+    <button class="power-toggle-btn" style ="display: none;"onclick="togglePower()">Toggle Power</button>
+</div>
+<audio id="clawedVentAudio" src="audio/ventfnaf2.mp3" preload="auto" style="display: none;"></audio>
+<audio id="jumpScareAudio" src="audio/fnaf2jumpscare.mp3" preload="auto" style="display: none;"></audio>
+<audio id="chompsAmbAudio" src="audio/fnaf2Amb.mp3" preload="auto" style="display: none;"></audio>
+<audio id="metalwalk" src="audio/MetalWalk.mp3" preload="auto" style="display: none;"></audio>
+<audio id="door-audio" src="audio/Door.mp3"></audio>
+<audio id="error-audio" src="audio/Error.mp3"></audio>
+
+<div id="audio-cues" class="audio-cues" style="display: none;"></div>  <!-- This will now only show the static audio cue text -->
+    </div>
+
+    
+  </div>
+
+  <!-- Camera Menu (Initially hidden) -->
+
+  </div>
+
+</div>
+<script>
+    // Game Variables
+    let isCameraOpen = false;
+    let chompsInMainArea = true;  // Chomps starts in the Main Area
+    let mouseInHallway = false;   // Mouse starts in the Hallway
+ 
+    let clawedInVent = false;     // Clawed starts off in the vent
+    let powerOff = false;
+    let aiDifficulty = 1; // AI Difficulty from 1 to 20
+    let movementInterval = 10000; // 10 seconds
+    
+    let powerRoomCameraActive = false;
+    let officeDoorClosed = false;
+    
+    // Clawed Vent Timer Variables
+    let clawedVentTimer;
+let mouseInLab = false
+function Nothing() {
+return;
+
+
+let showFog = true;  // Default to show fog
+let hours = 12;  // Start at 12 AM
+let night = 1;   // Start at night 1
+let gameRunning = true;  // Flag to track game status
+
+// Get the DOM elements
+const gameTimeDisplay = document.getElementById('game-time');
+const nightCounterDisplay = document.getElementById('night-counter');
+const winMessage = document.getElementById('win-message');
+const nextHourButton = document.getElementById('next-hour');  // Button to simulate the hour change
+
+// Function to update the game time
+function updateGameTime() {
+  if (gameRunning) {
+    // Increment the hours
+    hours++;
+    
+    // Reset hours to 12 when it reaches 6 AM (or 6 hours)
+    if (hours === 6) {
+      hours = 12;  // Reset to 12 (AM)
+      night++;     // Next night
+    }
+    
+    // Check if we've reached 6 AM (end of night 1)
+    if (hours === 6 && night === 1) {
+      gameRunning = false; // End the game after 6:00 AM
+      winMessage.style.display = 'block'; // Show win message
+      return;
+    }
+    
+    // Update the night display
+    nightCounterDisplay.textContent = `Night: ${night}`;
+    
+    // Format time in 12-hour AM/PM format
+    let formattedTime = formatTime(hours);
+    gameTimeDisplay.textContent = `Time: ${formattedTime}`;
+  }
+}
+
+
+
+// Function to format time into 12-hour AM/PM
+function formatTime(hours) {
+  let period = hours >= 12 ? 'AM' : 'PM';  // AM/PM period
+  let displayHours = hours % 12;
+  displayHours = displayHours === 0 ? 12 : displayHours; // Convert 0 to 12 for AM/PM
+  return `${displayHours} ${period}`;
+}
+
+// Event listener for the "Next Hour" button
+nextHourButton.addEventListener('click', function() {
+  updateGameTime(); // Call the function to simulate the passing of an hour
+});
+const cameras = {
+  mainArea: {
+    name: "Main Area",
+    isOpen: false,
+    toggle: function() {
+      this.isOpen = !this.isOpen;
+      if (this.isOpen) {
+        updateCameraFeed(this.name);
+        hidePowerToggleButton();
+      } else {
+        closeCameraFeed();
+      }
+    },
+    updateFeed: function() {
+      // Replace with actual condition to check animatronic presence
+      if (chompsInMainArea && mouseInMainArea && clawedInMainArea) {
+        console.log("Main Area Camera Feed: All animatronics are here.");
+        document.querySelector('.camera-image').src = 'S-All.png';  // All animatronics present
+      } else {
+        console.log("Main Area Camera Feed: No animatronics in sight.");
+        document.querySelector('.camera-image').src = 'S.png';  // Default when no animatronics
+      }
+    }
+  },
+
+  hallway: {
+    name: "Hallway",
+    isOpen: false,
+    toggle: function() {
+      this.isOpen = !this.isOpen;
+      if (this.isOpen) {
+        updateCameraFeed(this.name);
+        hidePowerToggleButton();
+      } else {
+        closeCameraFeed();
+      }
+    },
+    updateFeed: function() {
+      console.log("Hallway Camera Feed: Chomps is in the hallway.");
+      document.querySelector('.camera-image').src = 'ChompsHallway.png';
+    }
+  },
+
+  vent: {
+    name: "Vent",
+    isOpen: false,
+    toggle: function() {
+      this.isOpen = !this.isOpen;
+      if (this.isOpen) {
+        updateCameraFeed(this.name);
+        openVentCamera();
+      } else {
+        closeVentCamera();
+        closeCameraFeed();
+      }
+    },
+    updateFeed: function() {
+      if (clawedInVent) {
+        console.log("Vent Camera Feed: Clawed is in the vent.");
+        document.querySelector('.camera-image').src = 'Vent.png';
+      } else {
+        console.log("Vent Camera Feed: No animatronics in sight.");
+        document.querySelector('.camera-image').src = 'VentEmpty.png';
+      }
+    }
+  },
+
+  lab: {
+    name: "Lab",
+    isOpen: false,
+    toggle: function() {
+      this.isOpen = !this.isOpen;
+      if (this.isOpen) {
+        updateCameraFeed(this.name);
+        hidePowerToggleButton();
+      } else {
+        closeCameraFeed();
+      }
+    },
+    updateFeed: function() {
+      console.log("Lab Camera Feed: The lab is quiet.");
+      document.querySelector('.camera-image').src = 'Lab.png';
+    }
+  },
+
+  powerRoom: {
+    name: "Power Room",
+    isOpen: false,
+    toggle: function() {
+      this.isOpen = !this.isOpen;
+      if (this.isOpen) {
+        updateCameraFeed(this.name);
+        showPowerToggleButton();
+      } else {
+        closeCameraFeed();
+      }
+    },
+    updateFeed: function() {
+      console.log("Power Room Camera Feed: Active.");
+      document.querySelector('.camera-image').src = 'PowerRoomActive.png';
+    }
+  }
+};
+
+}
+
+
+    // Game Functions
+    function moveMouse() {
+  if (mouseInMainArea) {
+    // Play static noise when Mouse starts moving
+    playStaticCue();
+
+    console.log("Mouse is moving from Main Area to Lab...");
+    mouseInMainArea = false;
+    mouseInLab = true
+    // Simulate movement to the Lab
+    setTimeout(() => {
+      console.log("Mouse is now in the Lab...");
+      
+      // Now, move the mouse to the Hallway
+      setTimeout(() => {
+        console.log("Mouse is now in the Hallway...");
+
+        // Finally, move the mouse to the door (the player must close it)
+        mouseAtDoor = true; // Mouse has reached the door
+        playAudioCue("Mouse is at the door. Close the door!");
+
+      }, 3000); // Wait 3 seconds before moving to the hallway
+    }, 3000); // Wait 3 seconds before moving to the lab
+  }
+}
+function playDoorClosingSound() {
+  const doorAudio = document.getElementById('door-audio');
+  doorAudio.play();  // Plays the sound
+}
+
+// Play the error sound
+function playErrorSound() {
+  const errorAudio = document.getElementById('error-audio');
+  errorAudio.play();  // Plays the sound
+}
+// Variable to track the time of the last door action (in milliseconds)
+let lastActionTime = 0;
+const cooldownDuration = 1200;  // Cooldown time in milliseconds (1.2 seconds)
+
+function closeOfficeDoor() {
+  // Get the current time
+  const currentTime = Date.now();
+
+  // Check if the cooldown has passed (1.2 seconds)
+  if (currentTime - lastActionTime >= cooldownDuration) {
+    // Check if power is active before attempting to close the door
+    if (powerRoomActive) {  // Only allow the door to be closed if the Power Room is active
+      // Toggle the door state (open/close)
+      officeDoorClosed = !officeDoorClosed;
+
+      // Set the last action time to the current time
+      lastActionTime = currentTime;
+
+      var hallwayImage = document.querySelector('.hallway-image');
+
+      if (officeDoorClosed) {
+        console.log("The door has been closed to stop Mouse.");
+        playAudioCue("Door Closed");  // Play door closed sound
+        hallwayImage.src = 'OfficeDoorClosed.png';  // Change image to OfficeDoorClosed.png
+        playDoorClosingSound();  // Play the door closing sound
+      } else {
+        console.log("The door has been opened.");
+        playAudioCue("Door Opened");  // Optional: add a sound for opening the door
+        hallwayImage.src = 'Hallway.png';  // Change image back to Hallway.png
+        playDoorClosingSound();  // Play the door closing sound
+      }
+    } else {
+      // Power is off, so the door can't be closed
+      console.log("Power Room is inactive. The door cannot be closed.");
+      playErrorSound();  // Play the error sound
+    }
+  } else {
+    // If the cooldown hasn't passed yet, inform the player
+    console.log("Please wait before closing the door again.");
+  }
+}
+
+    // Start the game when the player clicks 'Start Game'
+    function showGameScreen() {
+      document.querySelector('.menu').style.display = 'none';
+      document.querySelector('.game-screen').style.display = 'block';
+      document.getElementById('office-vent-closed').style.display = 'block';
+      startGame();
+    }
+    let mouseAtDoor = false; // Initialize mouseAtDoor as false
+let mouseInMainArea = true; // Initialize mouse in the Main Area
+// Function to play static noise and display the static cue text
+function playStaticCue() {
+  const audioCuesDiv = document.getElementById('audio-cues');
+  
+  const audio = new Audio('static3.mp3'); // Create a new audio element
+  audio.play();  // Play the Chomps movement sound
+  console.log("Mouse move sound is playing.");
+}// Function to trigger the static overlay (show for 1 second)
+function triggerStaticOverlay() {
+  var staticOverlay = document.querySelector('.static-overlay');
+
+  if (!staticOverlay) {
+    console.error('Static overlay not found!');
+    return;
+  }
+
+  // Show the static overlay and start fade-in effect
+  staticOverlay.style.display = 'block';
+  staticOverlay.style.opacity = 1;  // Start the fade-in effect
+
+  // After 1 second, start fade-out and hide the overlay
+  setTimeout(function() {
+    staticOverlay.style.opacity = 0; // Trigger fade-out
+  }, 490); // After 1 second, start fade-out
+
+  // After the total duration (1s fade-in + 1s static + 0.2s fade-out), hide the overlay completely
+  setTimeout(function() {
+    staticOverlay.style.display = 'none';  // Hide the overlay after fading out
+  }, 1000); // Total time: 0.1s fade-in + 1s display + 0.2s fade-out
+}
+
+    // Start the game loop
+    function startGame() {
+      setInterval(() => {
+        moveAnimatronics();
+      }, movementInterval);
+      listenToPlayerActions();
+    }
+// Camera Interaction Functions
+
+function openCamera(cameraId) {
+  var cameraName = "";
+  document.getElementById('fog-overlay').style.display = 'none';
+  switch(cameraId) {
+    case '1': // Main Area Camera
+      cameraName = "Main Area";
+      updateCameraFeed(cameraName);
+      ventCameraOpen = false;
+      playFlipSound();  // Play the sound when switching camera
+      document.querySelector('.power-toggle-btn').style.display = 'none';  // Hide the button
+
+      triggerStaticOverlay()
+      break;
+    case '2': // Hallway Camera
+      cameraName = "Hallway";
+      updateCameraFeed(cameraName);
+      ventCameraOpen = false;
+      playFlipSound();  // Play the sound when switching camera
+      document.querySelector('.power-toggle-btn').style.display = 'none';  // Hide the button
+
+      triggerStaticOverlay()
+      break;
+    case '3': // Vent Camera
+        updateCameraFeed("Vent");
+        cameraName = "Vent";
+        ventCameraOpen = true;
+        playFlipSound();  // Play the sound when switching camera
+        document.querySelector('.power-toggle-btn').style.display = 'none';  // Hide the button
+
+        triggerStaticOverlay()
+      break;
+    case '4': // Lab Camera
+      cameraName = "Lab";
+      updateCameraFeed(cameraName);
+      ventCameraOpen = false;
+      playFlipSound();  // Play the sound when switching camera
+      document.querySelector('.power-toggle-btn').style.display = 'none';  // Hide the button
+
+      triggerStaticOverlay()
+      break;
+    case '5': // Power Room Camera
+      cameraName = "Power Room";
+      updateCameraFeed(cameraName);
+      ventCameraOpen = false;
+      playFlipSound();  // Play the sound when switching camera
+      document.querySelector('.power-toggle-btn').style.display = 'block';  // Hide the button
+
+      triggerStaticOverlay()
+      break;
+    default:
+      alert("Invalid camera selection.");
+      ventCameraOpen = false;
+      playFlipSound();  // Play the sound when switching camera
+      document.querySelector('.power-toggle-btn').style.display = 'none';  // Hide the button
+
+      
+      break;
+      playFlipSound();  // Play the sound when switching camera
+  }}
+
+function fadeScreen() {
+  const fadeOverlay = document.getElementById('fade-overlay');
+  
+  // Fade out (to black)
+  fadeOverlay.style.opacity = 1;
+
+  // After 1.5 seconds, fade back in (from black)
+  setTimeout(() => {
+    fadeOverlay.style.opacity = 0;
+  }, 1500);  // Wait for half of the total duration (3 seconds / 2)
+}
+
+
+
+let powerRoomActive = true
+// Update camera feed display
+
+
+
+// Animatronic state variables
+let chompsActive = true;
+let mouseActive = true;
+let clawedActive = true;
+
+
+function toggleFog() {
+  const fogOverlay = document.getElementById('fog-overlay');
+  showFog = !showFog;
+  fogOverlay.style.display = showFog ? 'block' : 'none';  // Hide or show the fog overlay
+}
+
+
+// Function to toggle an animatronic's state (on or off)
+function toggleAnimatronic(animatronic) {
+    switch (animatronic) {
+        case 'chomps':
+            chompsActive = !chompsActive;
+            console.log(`Chomps is now ${chompsActive ? 'active' : 'inactive'}`);
+            break;
+        case 'mouse':
+            mouseActive = !mouseActive;
+            console.log(`Mouse is now ${mouseActive ? 'active' : 'inactive'}`);
+            break;
+        case 'clawed':
+            clawedActive = !clawedActive;
+            console.log(`Clawed is now ${clawedActive ? 'active' : 'inactive'}`);
+            break;
+        default:
+            console.log("Unknown animatronic.");
+    }
+}
+
+
+
+
+
+function updateCameraFeed(cameraName) {
+  console.log(`You are viewing the camera feed for: ${cameraName}`);
+  document.getElementById('fog-overlay').style.display = 'none';
+  switch(cameraName) {
+    case "Main Area":
+    if (chompsInMainArea && !mouseInMainArea && clawedInVent) {
+  // Chomp is in the main area, Mouse is not, and Clawed is in the vent
+  console.log("Main Area Camera Feed: Chomp is there..");
+  document.querySelector('.cam-image').src = 'S-Chomp.png';  
+  document.getElementById('fog-overlay').style.display = 'block';
+} else if (chompsInMainArea && mouseInMainArea && clawedInVent) {
+  // Chomp and Mouse are in the main area, and Clawed is in the vent
+  console.log("Main Area Camera Feed: Chomp and Mouse are there.");
+  document.querySelector('.cam-image').src = 'S-ChompMouse.png';
+  document.getElementById('fog-overlay').style.display = 'block';
+} else if (!chompsInMainArea && mouseInMainArea && !clawedInVent) {
+  // Mouse and Clawed are in the main area, and Chomp is not
+  console.log("Main Area Camera Feed: Clawed and Mouse are here.");
+  document.querySelector('.cam-image').src = 'S-ClawMouse.png'; 
+  document.getElementById('fog-overlay').style.display = 'block';
+} else if (chompsInMainArea && !mouseInMainArea && !clawedInVent) {
+  // Chomp is in the main area, Mouse is not, and Clawed is also in the main area
+  console.log("Main Area Camera Feed: Chomp and Clawed are here.");
+  document.querySelector('.cam-image').src = 'S-ClawChomp.png'; 
+  document.getElementById('fog-overlay').style.display = 'block';
+} else if (chompsInMainArea && mouseInMainArea && !clawedInVent) {
+  // Chomp, Mouse, and Clawed are all in the main area
+  console.log("Main Area Camera Feed: All animatronics are here.");
+  document.querySelector('.cam-image').src = 'S-All.png';
+  document.getElementById('fog-overlay').style.display = 'block';
+} else if (!chompsInMainArea && !mouseInMainArea && !clawedInVent) {
+  // No animatronics are in the main area
+  console.log("Main Area Camera Feed: No animatronics in sight.");
+  document.querySelector('.cam-image').src = 'S';  // Clear the image
+  document.getElementById('fog-overlay').style.display = 'block';  // Hide the fog overlay
+}
+
+      
+      break;
+    case "Vent":
+      if (clawedInVent) {
+        console.log("Vent Camera Feed: Clawed is in the vent.");
+        document.querySelector('.cam-image').src = 'ClawVent.png';
+        document.getElementById('fog-overlay').style.display = 'block';
+      } else {
+        document.querySelector('.cam-image').src = 'Vent.png';
+        document.getElementById('fog-overlay').style.display = 'block';
+        console.log("Vent Camera Feed: No animatronics in sight.");
+      }
+    
+      break;
+    case "Lab":
+      console.log("Storage Camera Feed: The Storage is quiet.");
+      document.querySelector('.cam-image').src = 'Storage.png';
+      document.getElementById('fog-overlay').style.display = 'block';
+      break;
+    case "Power Room":
+      if (powerRoomCameraActive) {
+        console.log("Power Room Camera Feed: Active.");
+        document.querySelector('.cam-image').src = 'Power.png';
+        document.getElementById('fog-overlay').style.display = 'block';
+      } else {
+        console.log("Power Room Camera Feed: Inactive.");
+        document.querySelector('.cam-image').src = 'Power.png';
+        document.getElementById('fog-overlay').style.display = 'block';
+      }
+      break;
+    default:
+      console.log("Error: Camera not found.");
+  }
+}
+let mouseReturnDelay = 15;     // Delay time for mouse to return to main area if door is closed
+
+let powerButtonClicked = false;  // Add a flag to prevent multiple toggles
+// Function to toggle power state
+function togglePower() {
+    const powerBtn = document.querySelector('.power-toggle-btn');  // Get button element
+    powerRoomActive = !powerRoomActive;  // Toggle the power state
+
+    // Toggle the "active" class and button text based on the power state
+    if (powerRoomActive) {
+        console.log("Power is now ACTIVE.");
+        powerBtn.classList.add('active');  // Add the 'active' class when power is active
+        powerBtn.innerText = "Toggle OFF";  // Update the text when power is active
+    } else {
+        console.log("Power is now INACTIVE.");
+        powerBtn.classList.remove('active');  // Remove the 'active' class when power is inactive
+        powerBtn.innerText = "Toggle ON";  // Update the text when power is inactive
+    }
+}
+function showPowerToggleButton() {
+    const powerBtn = document.querySelector('.power-toggle-btn');  // Use correct selector
+  
+    powerBtn.style.display = 'block';  // Make the button visible
+    console.log("You can now toggle power from the Power Room.");
+}
+// Hide the power toggle button when not viewing the Power Room Camera
+function hidePowerToggleButton() {
+  const powerBtn = document.getElementById('powerToggleBtn');
+  
+  setTimeout(() => {
+    powerBtn.style.display = 'none';  // Hide the button
+  }, 300);  // Delay the hide for the duration of the fade-out animation
+}
+const flipSound = new Audio('Flip.ogg');  // Path to your Flip.ogg file
+
+// Function to play the Flip sound
+function playFlipSound() {
+  flipSound.play();  // Play the sound
+}
+document.addEventListener('keydown', function(event) {
+        // Check if the 'C' key is pressed
+        if (event.key === 'c' || event.key === 'C') {
+            openCamerasMenu();  // Call your camera menu function
+            console.log("Camera menu triggered.");
+        }
+
+        // Check if the 'D' key is pressed
+        if (event.key === 'd' || event.key === 'D') {
+            closeOfficeDoor();  // Call your close door function
+            console.log("Office door toggled.");
+        }
+    });
+function setDifficulty() {
+  let difficulty = prompt("Enter AI Difficulty (1 to 10):");
+  aiDifficulty = parseInt(difficulty, 10);
+  if (aiDifficulty >= 1 && aiDifficulty <= 10) {
+    // Adjust movement interval based on difficulty
+    switch (aiDifficulty) {
+      case 1:
+        movementInterval = 30000;  // Slower movement for difficulty 1 (5 seconds)
+        break;
+      case 2:
+        movementInterval = 29000;
+        break;
+      case 3:
+        movementInterval = 27000;
+        break;
+      case 4:
+        movementInterval = 25500;
+        break;
+      case 5:
+        movementInterval = 20000;
+        break;
+      case 6:
+        movementInterval = 15000;
+        break;
+      case 7:
+        movementInterval = 10000;  // Fastest movement for difficulty 7
+        break;
+
+        case 8:
+        movementInterval = 7500;  // Fastest movement for difficulty 8
+        break;
+        case 9:
+        movementInterval = 6250;  // Fastest movement for difficulty 9
+        break;
+        case 10:
+        movementInterval = 5000;  // Fastest movement for difficulty 10
+        break;
+      default:
+        movementInterval = 30000;
+        break;
+    }
+    console.log(`AI Difficulty set to: ${aiDifficulty}`);
+  } else {
+    alert("Please enter a valid difficulty (1 to 10).");
+  }
+}
+
+// Start a new game or reset after game over
+function resetGame() {
+  setTimeout(() => {
+    window.location.reload();  // Reload the page after 3 seconds
+  }, 3000);  // 3000 milliseconds = 3 seconds
+}
+
+let mouseDelayTime = 0;        // Random delay time before moving to the office door
+
+
+function playJumpScareSound() {
+  const audio = new Audio('fnaf2jumpscare.mp3'); // Create a new audio element
+  audio.play();  // Play the jump scare sound
+  console.log("Jump scare sound is playing.");
+}
+
+// Move animatronics based on the game logic
+function moveAnimatronics() { if (chompsActive && !mouseInHallway && chompsInMainArea && Math.random() < 0.2)
+   { chompsInMainArea = false; chompsInHallway = true; console.log
+    ("Chomps is moving to the Hallway..."); playChompsMoveSound(); 
+    fadeScreen();
+
+document.querySelector('.hallway-image').src = 'ChompsHallway.png';
+document.getElementById('fog-overlay').style.display = 'none';
+    const waitTime = Math.floor(Math.random() * 16) + 5;  // Random time between 5 and 20 seconds
+
+    setTimeout(() => {
+      // Check if the power is still active when Chomps reaches the hallway
+      if (chompsActive && chompsInHallway && powerRoomActive) {
+        fadeScreen();
+
+        console.log("JUMP SCARE: Chomps reached the hallway with power still ON!");
+        triggerJumpScare("Chomps caught you with the power ON!"); // Trigger jump scare if power is on
+      } else {
+        console.log("Chomps reached the hallway. Power is OFF, no jump scare.");
+        // Move Chomps back to the main area if power is off
+        fadeScreen();
+
+        document.querySelector('.hallway-image').src = 'Hallway.png';
+        document.getElementById('fog-overlay').style.display = 'none';
+        chompsInHallway = false;
+        chompsInMainArea = true;
+        console.log("Chomps is moving back to the Main Area.");
+      }
+    }, waitTime * 1000);  // Convert seconds to milliseconds
+  }
+
+  // **Make sure Chomps has a chance to move back to the hallway after returning to main area:**
+  if (chompsActive && chompsInMainArea && Math.random() < 0.1) {  // Chomps has a 20% chance to move back out
+    chompsInMainArea = false;
+    chompsInHallway = true;
+    fadeScreen();
+
+    console.log("Chomps is moving to the Hallway...");
+    playChompsMoveSound();
+    const waitTime = Math.floor(Math.random() * 16) + 15;  // Random wait time between 5 and 20 seconds
+
+    setTimeout(() => {
+      if (chompsActive && chompsInHallway && powerRoomActive) {
+        fadeScreen();
+
+        playJumpScareSound(); // Play jump scare sound
+        console.log("JUMP SCARE: Chomps reached the hallway with power still ON!");
+        triggerJumpScare("Chomps caught you with the power ON!");
+
+      } else {
+        console.log("Chomps reached the hallway. Power is OFF, no jump scare.");
+        fadeScreen();
+
+        chompsInHallway = false;
+        chompsInMainArea = true;
+        console.log("Chomps is moving back to the Main Area.");
+      }
+    }, waitTime * 2000);  // Random wait time before checking if power is on
+  }
+ 
+
+    // If Mouse is in the Main Area, randomly move it to the Hallway
+    if (mouseActive && !chompsInHallway && mouseInMainArea && Math.random() < 0.15) {
+        mouseInMainArea = false;
+        mouseInHallway = true;
+        playStaticCue()
+        fadeScreen();
+
+        console.log("Mouse is moving to the hallway...");
+        document.querySelector('.hallway-image').src = 'MouseHallway.png';
+        document.getElementById('fog-overlay').style.display = 'none';
+    }
+
+    // Move Mouse from Hallway to Office Door with a random delay (10 to 20 seconds)
+    if (mouseActive && mouseInHallway && !mouseAtDoor) {
+      
+        // Random delay for mouse in the hallway (between 10 and 20 seconds)
+        mouseDelayTime = Math.floor(Math.random() * 11) + 10;  // Random time between 10 and 20 seconds
+        console.log(`Mouse is in the hallway. It will take ${mouseDelayTime} seconds before moving to the door...`);
+
+        // Set a timeout for the random delay before moving the mouse to the door
+        setTimeout(() => {
+            mouseAtDoor = true;   // Mouse reaches the office door
+            mouseInHallway = false; // Mouse leaves the hallway
+            fadeScreen();
+
+            console.log("Mouse has reached the office door!");
+            if (!officeDoorClosed)
+            document.querySelector('.hallway-image').src = 'MouseDoor.png';
+            document.getElementById('fog-overlay').style.display = 'none';
+            // Optionally, you can trigger an audio cue for the mouse at the door
+
+            // Check if door is closed and mouse should go back to the main area
+            if (officeDoorClosed) {
+              fadeScreen();
+
+              document.getElementById('fog-overlay').style.display = 'none'; 
+                console.log("Office door is closed. Mouse will return to Main Area.");
+                mouseAtDoor = false; // Mouse is no longer at the door
+                mouseInMainArea = true; // Mouse returns to the main area
+                console.log("Mouse will stay in the main area for 15 seconds.");
+
+                // Set a timeout to keep the mouse inactive in the main area for 15 seconds
+                setTimeout(() => {
+return;
+                    }, mouseReturnDelay * 1000); // 15 seconds inactivity in main area
+            } else {
+                // If the door is open and mouse gets in, trigger jump scare after 20 seconds
+                if (!officeDoorClosed) {  // Check if the door is still open and power is on
+                    setTimeout(() => {
+return;
+                    }, 3000);  // 20-second delay before jump scare if door is not closed
+                }
+            }
+        }, mouseDelayTime * 1000);  // Convert seconds to milliseconds for the random delay
+    }
+  // Move Clawed to the vent
+  if (Math.random() < 0.8 && clawedActive && !clawedInVent) moveClawedToVent();
+  
+
+  // Logic for Clawed's vent time countdown
+  if (clawedActive && clawedInVent && clawedVentTimeLeft > 0) {
+    clawedVentTimeLeft--;
+    console.log(`Clawed in the vent. Time left: ${clawedVentTimeLeft}s`);
+
+    if (clawedVentTimeLeft <= 0) {
+triggerClawedJumpscare()
+
+    }
+  }
+}
+
+function stopGame() {
+  
+  gameRunning = false;
+
+  // Stop any active intervals (e.g., for time or animatronics)
+
+  // Deactivate animatronics (stop any logic related to them)
+  chompsActive = false;
+  clawedActive = false;
+  mouseActive = false;
+}
+// Move Clawed to the vent
+let ventCameraOpen = false; 
+let clawedVentTimeLeft = 0; // Timer for Clawed in the vent
+function playClawedVentSound() {
+  const audio = new Audio('ventfnaf2.mp3'); // Create a new audio element
+  audio.play();  // Play the vent sound
+  console.log("Clawed vent sound is playing.");
+}
+
+function moveClawedToVent() {
+  clawedInVent = true;
+  if (ventCameraOpen) {
+    // Wait for 2 seconds before showing the static overlay and opening the camera
+    setTimeout(function() {
+      // Trigger the static overlay effect
+      triggerStaticOverlay();
+
+      // Open the Vent camera (Camera ID: '3')
+      openCamera('3');
+    }, 2000); // 2000 milliseconds = 2 seconds delay
+  }
+
+  clawedVentTimeLeft = Math.floor(Math.random() * 1) + 5;  // Random time between 5-20 seconds
+  console.log(`Clawed is moving through the vent... You have ${clawedVentTimeLeft} seconds to check the vent.`);
+  playClawedVentSound();  // Play sound here when Clawed enters the vent
+
+  // Start the vent timer
+  clawedVentTimer = setInterval(() => {
+    if (clawedVentTimeLeft > 0) {
+      clawedVentTimeLeft--;
+      console.log(`Clawed in the vent. Time left: ${clawedVentTimeLeft}s`);
+    }
+
+    // If the time runs out and the player is not on the vent camera
+    if (clawedVentTimeLeft <= 0) {
+      clearInterval(clawedVentTimer);  // Stop the timer
+      if (!ventCameraOpen) {  // Check if the vent camera is not open
+        triggerClawedJumpscare();  // Trigger jump scare if camera is not open
+      
+      } else if (ventCameraOpen && clawedActive) {
+  console.log("You were looking at the vent camera. No jump scare.");
+  
+  // Call clawedBackToStage immediately (if needed)
+  clawedBackToStage();
+
+  // Wait for 3 seconds before showing the static overlay and opening the camera
+  setTimeout(function() {
+    // Trigger the static overlay
+    triggerStaticOverlay();
+
+    // Open the Vent camera (Camera ID: '3')
+    openCamera('3');
+  }, 100); // 3000 milliseconds = 3 seconds delay
+}
+    }
+  }, 1000); // Decrease time every second
+}
+
+// Trigger a jump scare if the timer runs out
+function triggerJumpScare(message) {
+  // Show death screen with the death message
+  const deathMessageElement = document.getElementById('death-message');
+  deathMessageElement.textContent = message || 'You were caught by an animatronic!';
+  document.getElementById('death-screen').style.display = 'block';  // Show the death screen
+  stopGame();  // Pause the game
+
+  playJumpScareSound(); // Play the jump scare sound
+}
+
+// Function to pause the game
+function pauseGame() {
+  clearInterval(gameLoop);  // Stop the game loop
+  console.log("Game paused due to jump scare.");
+}
+let gameLoop; // Declare a global variable to store the game loop
+
+function startGame() {
+  // Hide the menu and show the game screen
+  document.querySelector('.menu').style.display = 'none';  // Hide the menu
+  document.querySelector('.game-screen').style.display = 'block';  // Show the game screen
+  document.querySelector('.animatronic-controls').style.display = 'none';  // Show the game screen
+
+  // Reset game variables and start game loop
+  gameLoop = setInterval(() => {
+    moveAnimatronics();
+  }, movementInterval);
+  listenToPlayerActions();  // Start player interactions
+}
+// Retry the game by restarting everything
+function retryGame() {
+  resetGame();  // Reset the game state and restart the game
+}
+
+
+function triggerClawedJumpscare() {
+  var camMenu = document.getElementById('Cam');  // Assuming 'Cam' is the ID of the camera menu div
+  
+  // Check if camMenu exists and is visible, then open the camera menu
+  if (camMenu && camMenu.style.display === 'block') {
+    openCamerasMenu();  // Call your function to open the camera menu
+  }
+  document.getElementById('fog-overlay').style.display = 'none';  // Hide the fog overlay
+  var jumpscareOverlay = document.getElementById('clawed-jumpscare-overlay');
+  var jumpscareVideo = document.getElementById('clawed-jumpscare-video');
+  console.log("Claw Jumpscare Video")
+  jumpscareOverlay.style.display = 'block';  // Show the overlay
+  jumpscareVideo.play();  // Play the video
+
+  // Hide the video after 5 seconds
+  setTimeout(function() {
+    jumpscareVideo.pause();  // Pause video
+    jumpscareOverlay.style.display = 'none';  // Hide overlay
+    resetGame()
+ // Show death screen with the death message
+
+ document.getElementById('death-screen').style.display = 'block';  // Show the death screen
+  }, 7000);  // Adjust duration as needed
+    document.getElementById('death-screen').style.display = 'block';  // Show the death screen
+
+}
+
+
+// Wait for the DOM content to load
+document.addEventListener("DOMContentLoaded", function() {
+
+// Get the fullscreen button
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+// Function to enter fullscreen mode
+function enterFullscreen() {
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen();  // Enter fullscreen
+  } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+    document.documentElement.mozRequestFullScreen();
+  } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari, Opera
+    document.documentElement.webkitRequestFullscreen();
+  } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+    document.documentElement.msRequestFullscreen();
+  }
+  
+  // Change button text to "Exit Fullscreen" after entering fullscreen
+  fullscreenBtn.innerText = "Exit Fullscreen";
+}
+
+// Function to exit fullscreen mode
+function exitFullscreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();  // Exit fullscreen
+  } else if (document.mozCancelFullScreen) { // Firefox
+    document.mozCancelFullScreen();
+  } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) { // IE/Edge
+    document.msExitFullscreen();
+  }
+  
+  // Change button text to "Go Fullscreen" after exiting fullscreen
+  fullscreenBtn.innerText = "Go Fullscreen";
+}
+
+// Add event listener to the fullscreen button
+fullscreenBtn.addEventListener('click', function() {
+  // Check if we're currently in fullscreen mode
+  if (!document.fullscreenElement && 
+      !document.mozFullScreenElement && 
+      !document.webkitFullscreenElement && 
+      !document.msFullscreenElement) {
+    // If not in fullscreen, enter fullscreen
+    enterFullscreen();
+  } else {
+    // If in fullscreen, exit fullscreen
+    exitFullscreen();
+  }
+});
+
+// Keyboard shortcut for "F" key to toggle fullscreen
+document.addEventListener("keydown", function(event) {
+  if (event.key === "f" || event.key === "F") {
+    // If we're not in fullscreen, enter fullscreen, otherwise exit fullscreen
+    if (!document.fullscreenElement && 
+        !document.mozFullScreenElement && 
+        !document.webkitFullscreenElement && 
+        !document.msFullscreenElement) {
+      enterFullscreen();
+    } else {
+      exitFullscreen();
+    }
+  }
+});
+});
+
+
+
+// Show the main menu (go back to the main screen)
+function showMenu() {
+ window.location.reload();
+}
+function resetGame() {
+ stopGame()
+}
+// Move Clawed back to stage after vent
+function clawedBackToStage() {
+  if (clawedActive && clawedInVent) {
+  clawedInVent = false;
+  console.log("Clawed has returned to the main area.");
+  metalwalk()
+  // Clear timer once Clawed returns to the stage
+  clearInterval(clawedVentTimer);
+  clawedVentTimeLeft = 0;
+  } else {
+    return;
+}}
+
+
+// Update the animatronics status display
+function updateAnimatronicsStatus(message) {
+  const statusDiv = document.getElementById('animatronics-status');
+  statusDiv.innerHTML = `<p>${message}</p>`;
+}
+
+// Display audio cues (text-based)
+function playAudioCue(cue) {
+  const audioCuesDiv = document.getElementById('audio-cues');
+  audioCuesDiv.innerHTML = `<p>*Audio Cue*: ${cue}</p>`;
+}
+
+
+// Start the game and listen to user actions
+function listenToPlayerActions() {
+  // Sample controls can be added here if needed for specific buttons or keypress events.
+  // For now, this just starts the game logic in motion.
+}
+
+// Function to open Camera Menu and display camera options
+function openCamerasMenu() {
+  var camMenu = document.getElementById('Cam');
+  if (camMenu.style.display === 'block') {
+    document.querySelector('.power-toggle-btn').style.display = 'none';  // Hide the button
+    
+    document.getElementById('fog-overlay').style.display = 'none';  // Hide the fog overlay
+    camMenu.style.display = 'none'; // Hide the camera menu
+    console.log("Camera menu closed.");
+  } else {
+    openCamera('1');  // Automatically start on the Main Area camera
+    camMenu.style.display = 'block'; // Hide the camera menu
+    console.log("Camera menu opened.");
+  }
+}
+
+
+
+let chompsInHallway = false;
+
+
+
+// Hide the power toggle button when leaving the Power Room camera
+function closeCamera(cameraId) {
+  if (cameraId === '5') {  // If we leave the Power Room camera
+    hidePowerToggleButton();  // Hide power toggle button
+  }
+}
+
+
+function playJumpScareSound() {
+  const audio = new Audio('fnaf2jumpscare.mp3'); // Create a new audio element
+  audio.play();  // Play the jump scare sound
+  console.log("Jump scare sound is playing.");
+}
+function metalwalk(){
+const audio = new Audio('MetalWalk.mp3');
+audio.play();
+console.log("Something went away.")
+}
+// Function to play Chomps move sound (when moving to the hallway)
+function playChompsMoveSound() {
+  const audio = new Audio('fnaf2Amb.mp3'); // Create a new audio element
+  audio.play();  // Play the Chomps movement sound
+  console.log("Chomps move sound is playing.");
+}
+
+
+</script>
+
+</body>
+</html>
