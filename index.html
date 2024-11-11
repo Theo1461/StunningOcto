@@ -1146,6 +1146,11 @@ function moveClawedToVent() {
     }
   }, 1000);
 }
+function showGameScreen() {
+  document.querySelector('.menu').style.display = 'none';  // Hide the main menu
+  document.querySelector('.game-screen').style.display = 'block';  // Show the game screen
+  document.querySelector('.animatronic-controls').style.display = 'none';  // Hide the animatronic controls
+}
 
 function triggerJumpScare(message) {
   const deathMessageElement = document.getElementById('death-message');
