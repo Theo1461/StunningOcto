@@ -4,8 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title></title>
-  <style>
-    /* Grayish rectangle where the floor was */
+<style>
+  #death-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(139, 0, 0, 0.9);
+      color: white;
+      z-index: 10100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+    }
+
+    #death-screen h2 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    }
+
+    #death-screen p {
+      font-size: 1.5rem;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    #death-screen button {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      background-color: #b22222;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #death-screen button:hover {
+      background-color: #800000;
+    }
 .floor-rectangle {
   position: fixed; 
   border-top: 10px solid black;
@@ -297,7 +339,7 @@ left: 60%;
       text-align: center;
     }
 
-    #clawed-jumpscare-overlay {
+    #clawed-jumpscare-overlay, #chomps-jumpscare-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -313,7 +355,12 @@ left: 60%;
   width: 100%;
   height: 100%;
 }
-
+#chomps-jumpscare-video {
+  z-index: 20000;
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
 
     #fog-overlay {
   position: absolute;
@@ -511,18 +558,21 @@ button-grid:active { background-color: green; }
 
 <!-- Button to toggle the static overlay visibility -->
   <div id="fade-overlay"></div>
-  <div id="clawed-jumpscare-overlay" style="display: none;">
+  <div id="clawed-jumpscare-overlay">
     <video id="clawed-jumpscare-video" width="100%" height="100%" autoplay>
       <source src="clawedjumpscare.mp4" type="video/mp4">
-      Your browser does not support the video tag.
     </video>
   </div>
-  
-<div class="container">
-  <h1></h1>
-  <div id="death-screen" style="display: none; color: white;">
+
+  <div id="chomps-jumpscare-overlay">
+    <video id="chomps-jumpscare-video" width="100%" height="100%" autoplay>
+      <source src="chompsjumpscare.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <div id="death-screen" style=" display: none;"</div>
     <h2>GAME OVER</h2>
-    <p id="death-message"></p>
+    <p id="death-message">You failed to survive... v. Pre-R2</p>
     <button onclick="showMenu()">Main Menu</button>
   </div>
   <!-- Menu -->
@@ -572,8 +622,8 @@ button-grid:active { background-color: green; }
 <audio id="jumpScareAudio" src="audio/fnaf2jumpscare.mp3" preload="auto" style="display: none;"></audio>
 <audio id="chompsAmbAudio" src="audio/fnaf2Amb.mp3" preload="auto" style="display: none;"></audio>
 <audio id="metalwalk" src="audio/MetalWalk.mp3" preload="auto" style="display: none;"></audio>
-<audio id="door-audio" src="audio/Door.mp3"></audio>
-<audio id="error-audio" src="audio/Error.mp3"></audio>
+<audio id="door-audio" src="Door.mp3"></audio>
+<audio id="error-audio" src="Error.mp3"></audio>
 
 <div id="audio-cues" class="audio-cues" style="display: none;"></div>  <!-- This will now only show the static audio cue text -->
     </div>
@@ -1239,10 +1289,8 @@ document.getElementById('fog-overlay').style.display = 'none';
     setTimeout(() => {
       if (chompsActive && chompsInHallway && powerRoomActive) {
         fadeScreen();
-
-        playJumpScareSound(); // Play jump scare sound
         console.log("JUMP SCARE: Chomps reached the hallway with power still ON!");
-        triggerJumpScare("Chomps caught you with the power ON!");
+        triggerChompsJumpscare();
 
       } else {
         console.log("Chomps reached the hallway. Power is OFF, no jump scare.");
@@ -1455,12 +1503,30 @@ function triggerClawedJumpscare() {
 
  document.getElementById('death-screen').style.display = 'block';  // Show the death screen
   }, 7000);  // Adjust duration as needed
-    document.getElementById('death-screen').style.display = 'block';  // Show the death screen
 
 }
+function triggerChompsJumpscare() {
+      var camMenu = document.getElementById('Cam');
+      if (camMenu && camMenu.style.display === 'block') {
+        openCamerasMenu();
+      }
+      document.getElementById('fog-overlay').style.display = 'none';
+      var jumpscareOverlay = document.getElementById('chomps-jumpscare-overlay');
+      var jumpscareVideo = document.getElementById('chomps-jumpscare-video');
+      console.log("Chomps Jumpscare Video");
+      jumpscareOverlay.style.display = 'block';
+      jumpscareVideo.play();
 
+      setTimeout(function() {
+        jumpscareVideo.pause();
+        jumpscareOverlay.style.display = 'none';
+        resetGame();
 
-// Wait for the DOM content to load
+        document.getElementById('death-screen').style.display = 'block';
+      }, 2000);
+    }
+
+//it for the DOM content to load
 document.addEventListener("DOMContentLoaded", function() {
 
 // Get the fullscreen button
