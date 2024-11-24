@@ -940,12 +940,13 @@ const secondIntervalId = setInterval(() => {
   if (currentMinute === 6 && currentNight < 7) {
     endNight();
   }
-  if (currentMinute === 6 && currentNight === 8) {
+  if (currentMinute === 6 && currentNight === 8 || currentNight === 7 ) {
     playEndSound();
     document.getElementById("timer").style.display = 'none'
     document.getElementById("night").style.display = 'none'
     currentMinute = 6
     currentSecond = 10
+    currentNight = 7
     document.getElementById('endScreen').style.display = 'block';
     clawedBackToStage()
     document.querySelector('.game-screen').style.display = 'none';
